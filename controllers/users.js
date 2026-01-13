@@ -18,9 +18,10 @@ const getUser = (req, res) => {
 const createUser = (req, res) => {
   const { name, avatar } = req.body;
 
-   return user.create({ name, avatar })
+
+  return user.create({ name, avatar })
     .then((newUser) => res.status(201).send(newUser))
-    .catch(() => res.status(500).send({ message: 'Failed to create user' }));
+    .catch(() => res.status(400).send({ message: 'Invalid user data' }));
 };
 
 

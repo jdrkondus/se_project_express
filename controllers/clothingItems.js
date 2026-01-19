@@ -27,17 +27,21 @@ const deleteClothingItem = (req, res) => {
   ClothingItems.findById(itemId)
     .then((item) => {
       if (!item) {
-        return res.status(404).send({ message: 'Clothing item not found' });
+        res.status(404).send({ message: 'Clothing item not found' });
+        return null;
       }
       if (item.owner.toString() !== req.user._id) {
-        return res.status(403).send({ message: 'You do not have permission to delete this item' });
+        res.status(403).send({ message: 'You do not have permission to delete this item' });
+        return null;
       }
       // Return the next promise to keep the chain flat
       return ClothingItems.findByIdAndDelete(itemId);
     })
     .then((deletedItem) => {
-      // If we got here, it means the item was deleted or we already sent a 404/403
-      if (deletedItem) res.send(deletedItem);
+      // Only send response if deletedItem is not null
+      if (deletedItem) {
+        res.send(deletedItem);
+      }
     })
     .catch((err) => {
       if (err.name === 'CastError') {

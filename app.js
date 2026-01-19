@@ -7,11 +7,11 @@ const app = express();
 const { PORT = 3001 } = process.env;
 
 
-const userRoutes = require('./routes/users');
-const clothingItemRoutes = require('./routes/clothingItems');
-
 const { createUser, loginUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
+
+const userRoutes = require('./routes/users');
+const clothingItemRoutes = require('./routes/clothingItems');
 
 app.use(cors());
 app.use(express.json());
@@ -29,8 +29,8 @@ app.use(express.json());
 app.post('/signup', createUser);
 app.post('/signin', loginUser);
 
-app.use('/users', auth, userRoutes);
-app.use('/items', auth, clothingItemRoutes);
+app.use('/', auth, userRoutes);
+app.use('/', auth, clothingItemRoutes);
 
 // 404 handler - must come after all other routes
 app.use((req, res) => {

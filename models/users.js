@@ -17,8 +17,38 @@ const userSchema = new mongoose.Schema({
   },
   message: 'You must enter a valid URL',
 }
-    }});
+    }, email: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+  validator(value) {
+    return validator.isEmail(value);
+  },
+  message: 'You must enter a valid email address',
+}},
+    password: {
+        type: String,
+        required: true,
+        select: false,
+    },
+});
 
-
+userSchema.statics.findUserByCredentials = function findUserByCredentials(email, password) {
+  const bcrypt = require('bcryptjs');
+  return this.findOne({ email }).select('+password')
+    .then((user) => {
+      if (!user) {
+        return Promise.reject(new Error('User not found'));
+      }
+      return bcrypt.compare(password, user.password)
+        .then((isPasswordMatch) => {
+          if (!isPasswordMatch) {
+            return Promise.reject(new Error('Incorrect password'));
+          }
+          return user;
+        });
+    });
+};
 
 module.exports = mongoose.model('user', userSchema);

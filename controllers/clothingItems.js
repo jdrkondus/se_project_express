@@ -28,12 +28,20 @@ const createClothingItems = (req, res) => {
 const deleteClothingItem = (req, res) => {
   const { itemId } = req.params;
 
-  return ClothingItems.findByIdAndDelete(itemId)
-    .then((deletedItem) => {
-      if (!deletedItem) {
+  return ClothingItems.findById(itemId)
+    .then((item) => {
+      if (!item) {
         return res.status(404).send({ message: 'Clothing item not found' });
       }
-      return res.send(deletedItem);
+      if (item.owner.toString() !== req.user._id) {
+        return res.status(403).send({ message: 'You do not have permission to delete this item' });
+      }
+      return ClothingItems.findByIdAndDelete(itemId);
+    })
+    .then((deletedItem) => {
+      if (deletedItem) {
+        return res.send(deletedItem);
+      }
     })
     .catch((err) => {
       if (err.name === 'CastError') {

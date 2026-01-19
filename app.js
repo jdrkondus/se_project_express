@@ -1,18 +1,21 @@
 
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
 const app = express();
 const { PORT = 3001 } = process.env;
 const userRoutes = require('./routes/users');
 const clothingItemRoutes = require('./routes/clothingItems');
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: "69658364a3a449e5f2e3bfac"
-  };
-  next();
-});
+
+
+// app.use((req, res, next) => {
+//   req.user = {
+//     _id: "69658364a3a449e5f2e3bfac"
+//   };
+//   next();
+// });
 
 app.use(express.json());
 app.use(userRoutes);

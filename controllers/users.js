@@ -5,57 +5,64 @@ const { JWT_SECRET } = require('../utils/config');
 const saltRounds = 10;
 
 const getUsers = (req, res) => {
-  user.find({}).then((users) => res.send(users)).catch(() => res.status(500).send({ message: 'Failed to fetch users' }));
-}
+  user.find({})
+    .then((users) => res.send(users))
+    .catch(() => res.status(500).send({ message: 'An error has occurred on the server' }));
+};
 
 const getCurrentUser = (req, res) => {
-  user.findById(req.user._id).then((userData) => {
-    if (!userData) {
-      return res.status(404).send({ message: 'User not found' });
-    }
-    return res.send(userData);
-  }).catch(() => {
-    res.status(400).send({ message: 'Failed to fetch user' });
-  });
-}
+  user.findById(req.user._id)
+    .then((userData) => {
+      if (!userData) {
+        return res.status(404).send({ message: 'User not found' });
+      }
+      return res.status(200).send(userData);
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res.status(400).send({ message: 'Invalid user ID' });
+      }
+      return res.status(500).send({ message: 'An error has occurred on the server' });
+    });
+};
 
 const createUser = (req, res) => {
-  const { name, avatar, password } = req.body;
+  const { name, avatar, password, email } = req.body;
 
   return bcrypt.hash(password, saltRounds)
-    .then((hashedPassword) => user.create({ name, avatar, password: hashedPassword }))
+    .then((hashedPassword) => user.create({ name, avatar, password: hashedPassword, email }))
     .then((newUser) => {
-      User.findOne({ email }).select('+password')
- .then((user) => {
-      if (!user) {
-        return Promise.reject(new Error('User not found'));
-      }
-      return bcrypt.compare(password, user.password)
-        .then((isPasswordMatch) => {
-          if (!isPasswordMatch) {
-            return Promise.reject(new Error('Incorrect password'));
-          }
-          return user;
-        });
- });
-      delete newUser.password;
-      return res.status(201).send(newUser);
+      const userObj = newUser.toObject();
+      delete userObj.password;
+      return res.status(201).send(userObj);
     })
-    .catch(() => res.status(409).send({ message: 'Invalid user data' }));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Invalid user data' });
+      }
+      if (err.code === 11000) {
+        return res.status(409).send({ message: 'Email already in use' });
+      }
+      return res.status(500).send({ message: 'Server error' });
+    });
 };
 
 const loginUser = (req, res) => {
   const { email, password } = req.body;
+
+  if(!email || !password) {
+    return res.status(400).send({ message: 'Email and password are required' });
+  }
 
   return user.findUserByCredentials(email, password)
     .then((loggedInUser) => {
       const token = jwt.sign({ _id: loggedInUser._id }, JWT_SECRET, {
         expiresIn: '7d',
       });
-      res.send({ token });
+      return res.send({ token });
     })
     .catch(() => {
-      res.status(401).send({ message: 'Invalid email or password' });
+      return res.status(401).send({ message: 'Invalid email or password' });
     });
 };
 
@@ -73,9 +80,16 @@ const updateUser = (req, res) => {
       }
       return res.send(updatedUser);
     })
-    .catch(() => {
-      res.status(400).send({ message: 'Failed to update user' });
-    });};
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res.status(400).send({ message: 'Invalid user ID' });
+      }
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Invalid user data' });
+      }
+      return res.status(500).send({ message: 'An error has occurred on the server' });
+    });
+};
 
 module.exports = {
   getUsers,

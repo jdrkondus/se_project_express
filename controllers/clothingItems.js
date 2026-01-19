@@ -3,15 +3,11 @@ const ClothingItems = require('../models/clothingItems');
 const getClothingItems = (req, res) => {
   ClothingItems.find({})
     .then((items) => res.send(items))
-    .catch(() => res.status(500).send({ message: 'Failed to fetch clothing items' }));
+    .catch(() => res.status(500).send({ message: 'An error has occurred on the server' }));
 };
 
 const createClothingItems = (req, res) => {
   const { name, weather, imageUrl } = req.body;
-
-  if (!req.user) {
-    return res.status(500).send({ message: "User not authorized" });
-  }
 
   const owner = req.user._id;
 
@@ -19,16 +15,16 @@ const createClothingItems = (req, res) => {
     .then((newItem) => res.status(201).send(newItem))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Invalid user data' });
+        return res.status(400).send({ message: 'Invalid clothing item data' });
       }
-      return res.status(500).send({ message: 'Failed to create item' });
+      return res.status(500).send({ message: 'An error has occurred on the server' });
     });
 };
 
 const deleteClothingItem = (req, res) => {
   const { itemId } = req.params;
 
-  return ClothingItems.findById(itemId)
+  ClothingItems.findById(itemId)
     .then((item) => {
       if (!item) {
         return res.status(404).send({ message: 'Clothing item not found' });
@@ -36,21 +32,20 @@ const deleteClothingItem = (req, res) => {
       if (item.owner.toString() !== req.user._id) {
         return res.status(403).send({ message: 'You do not have permission to delete this item' });
       }
+      // Return the next promise to keep the chain flat
       return ClothingItems.findByIdAndDelete(itemId);
     })
     .then((deletedItem) => {
-      if (deletedItem) {
-        return res.send(deletedItem);
-      }
+      // If we got here, it means the item was deleted or we already sent a 404/403
+      if (deletedItem) res.send(deletedItem);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(400).send({ message: 'Invalid ID format' });
+        return res.status(400).send({ message: 'Invalid clothing item ID' });
       }
-      return res.status(500).send({ message: 'Internal server error' });
+      return res.status(500).send({ message: 'An error has occurred on the server' });
     });
 };
-
 const likeItem = (req, res) => ClothingItems.findByIdAndUpdate(
   req.params.itemId,
   { $addToSet: { likes: req.user._id } },
@@ -58,15 +53,15 @@ const likeItem = (req, res) => ClothingItems.findByIdAndUpdate(
 )
   .then((item) => {
     if (!item) {
-      return res.status(404).send({ message: 'Item not found' });
+      return res.status(404).send({ message: 'Clothing item not found' });
     }
     return res.send(item);
   })
   .catch((err) => {
     if (err.name === 'CastError') {
-      return res.status(400).send({ message: 'Invalid ID format' });
+      return res.status(400).send({ message: 'Invalid clothing item ID' });
     }
-    return res.status(500).send({ message: 'Internal server error' });
+    return res.status(500).send({ message: 'An error has occurred on the server' });
   });
 
 const dislikeItem = (req, res) => ClothingItems.findByIdAndUpdate(
@@ -76,15 +71,15 @@ const dislikeItem = (req, res) => ClothingItems.findByIdAndUpdate(
 )
   .then((item) => {
     if (!item) {
-      return res.status(404).send({ message: 'Item not found' });
+      return res.status(404).send({ message: 'Clothing item not found' });
     }
     return res.send(item);
   })
   .catch((err) => {
     if (err.name === 'CastError') {
-      return res.status(400).send({ message: 'Invalid ID format' });
+      return res.status(400).send({ message: 'Invalid clothing item ID' });
     }
-    return res.status(500).send({ message: 'Internal server error' });
+    return res.status(500).send({ message: 'An error has occurred on the server' });
   });
 
 module.exports = {

@@ -5,11 +5,20 @@ const cors = require('cors');
 
 const app = express();
 const { PORT = 3001 } = process.env;
+
+
 const userRoutes = require('./routes/users');
 const clothingItemRoutes = require('./routes/clothingItems');
 
+const { createUser, loginUser } = require('./controllers/users');
+const auth = require('./middlewares/auth');
+
+app.use(cors());
+app.use(express.json());
 
 
+
+// Mock user middleware - allows tests to reach protected routes
 // app.use((req, res, next) => {
 //   req.user = {
 //     _id: "69658364a3a449e5f2e3bfac"
@@ -17,23 +26,23 @@ const clothingItemRoutes = require('./routes/clothingItems');
 //   next();
 // });
 
-app.use(express.json());
-app.use(userRoutes);
-app.use(clothingItemRoutes);
+app.post('/signup', createUser);
+app.post('/signin', loginUser);
 
-mongoose
-.connect('mongodb://127.0.0.1:27017/wtwr_db');
+app.use('/users', auth, userRoutes);
+app.use('/items', auth, clothingItemRoutes);
 
-
-
-app.listen(PORT, () => {
-  console.log(`Server is listening on port ${PORT}`);
-});
-
-// eslint-disable-next-line no-console
+// 404 handler - must come after all other routes
 app.use((req, res) => {
   res.status(404).send({
     message: "Requested resource not found"
   });
+});
+
+mongoose
+.connect('mongodb://127.0.0.1:27017/wtwr_db');
+
+app.listen(PORT, () => {
+  console.log(`Server is listening on port ${PORT}`);
 });
 

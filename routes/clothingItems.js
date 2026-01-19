@@ -10,8 +10,8 @@ router.post('/items', createClothingItems);
 
 router.delete('/items/:itemId', deleteClothingItem);
 
-router.put('/items/:itemId/likes', likeItem, { new: true});
+router.put('/items/:itemId/likes', likeItem);
 
-router.delete('/items/:itemId/likes', dislikeItem, { new: true});
+router.delete('/items/:itemId/likes', dislikeItem);
 
 module.exports = router;

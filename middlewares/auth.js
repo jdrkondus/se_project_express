@@ -1,13 +1,22 @@
-const token = authorization.replace("Bearer ", "");
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../utils/config');
 
-payload = jwt.verify(token, JWT_SECRET);
-req.user = { _id: payload._id };
-next();
-try {
-  jwt.verify(token, JWT_SECRET);
-} catch (err) {
-  res.status(401).send({ message: "Authorization required" });
-}
-;
+const auth = (req, res, next) => {
+  const { authorization } = req.headers;
+
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return res.status(401).send({ message: 'Authorization header missing or invalid' });
+  }
+
+  const token = authorization.replace('Bearer ', '');
+
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload;
+    next();
+  } catch (err) {
+    return res.status(401).send({ message: 'Invalid or expired token' });
+  }
+};
 
 module.exports = auth;

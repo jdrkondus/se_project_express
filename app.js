@@ -29,8 +29,9 @@ app.use(express.json());
 app.post('/signup', createUser);
 app.post('/signin', loginUser);
 
+app.use('/items',  clothingItemRoutes);
 app.use('/', auth, userRoutes);
-app.use('/', auth, clothingItemRoutes);
+
 
 // 404 handler - must come after all other routes
 app.use((req, res) => {

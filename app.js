@@ -1,4 +1,4 @@
-
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -24,7 +24,7 @@ app.use(requestLogger);
 
 app.post('/signup', createUser);
 app.post('/signin', loginUser);
-app.use('/', getCurrentUser, getUsers);
+// app.use('/', clothingItemRoutes);
 
 app.use('/items',  clothingItemRoutes);
 app.use('/profile', auth, userRoutes);

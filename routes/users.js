@@ -12,5 +12,9 @@ router.get('/users/me', getCurrentUser);
 
 router.patch('/users/me', updateUser);
 
+router.post('/signup', createUser);
+
+router.post('/signin', loginUser);
+
 
 module.exports = router;

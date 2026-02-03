@@ -1,5 +1,4 @@
 const user = require('../models/users');
-const errorHandler = require('../middlewares/errorHandler');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
@@ -9,29 +8,30 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../utils/config');
 const saltRounds = 10;
 
-const getUsers = (req, res) => {
+const getUsers = (req, res, next) => {
   user.find({})
     .then((users) => res.send(users))
-    .catch((err) => errorHandler(err, req, res));
+    .catch(next);
 };
 
-const getCurrentUser = (req, res) => {
+const getCurrentUser = (req, res, next) => {
   user.findById(req.user._id)
     .then((userData) => {
       if (!userData) {
-        return new NotFoundError('User not found');
+        throw new NotFoundError('User not found');
       }
       return res.status(200).send(userData);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return new BadRequestError('Invalid user ID');
+        next(new BadRequestError('Invalid user ID'));
+      } else {
+        next(err);
       }
-      return errorHandler(err, req, res);
     });
 };
 
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const { name, avatar, password, email } = req.body;
 
   return bcrypt.hash(password, saltRounds)
@@ -46,20 +46,20 @@ const createUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return new BadRequestError('Invalid user data');
+        next(new BadRequestError('Invalid user data'));
+      } else if (err.code === 11000) {
+        next(new ConflictError('Email already in use'));
+      } else {
+        next(err);
       }
-      if (err.code === 11000) {
-        return new ConflictError('Email already in use');
-      }
-      return errorHandler(err, req, res);
     });
 };
 
-const loginUser = (req, res) => {
+const loginUser = (req, res, next) => {
   const { email, password } = req.body;
 
   if(!email || !password) {
-    return new BadRequestError('Email and password are required');
+    return next(new BadRequestError('Email and password are required'));
   }
 
   return user.findUserByCredentials(email, password)
@@ -72,11 +72,11 @@ const loginUser = (req, res) => {
       return res.send({ token, user: userObj });
     })
     .catch(() => {
-      return new UnauthorizedError('Invalid email or password');
+      next(new UnauthorizedError('Invalid email or password'));
     });
 };
 
-const updateUser = (req, res) => {
+const updateUser = (req, res, next) => {
   const { name, avatar } = req.body;
 
   user.findByIdAndUpdate(
@@ -86,18 +86,18 @@ const updateUser = (req, res) => {
   )
     .then((updatedUser) => {
       if (!updatedUser) {
-        return new NotFoundError('User not found');
+        throw new NotFoundError('User not found');
       }
       return res.send(updatedUser);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return new BadRequestError('Invalid user ID');
+        next(new BadRequestError('Invalid user ID'));
+      } else if (err.name === 'ValidationError') {
+        next(new BadRequestError('Invalid user data'));
+      } else {
+        next(err);
       }
-      if (err.name === 'ValidationError') {
-        return new BadRequestError('Invalid user data');
-      }
-      return errorHandler(err, req, res);
     });
 };
 

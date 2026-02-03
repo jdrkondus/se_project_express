@@ -4,7 +4,7 @@ const errorHandler = (err, req, res, next) => {
 
   res
   .status(statusCode)
-  .send({
+  .json({
     message: statusCode === 500
       ? 'An internal server error occurred'
       : message,

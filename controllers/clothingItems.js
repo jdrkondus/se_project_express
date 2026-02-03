@@ -2,15 +2,14 @@ const ClothingItems = require('../models/clothingItems');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const ForbiddenError = require('../errors/ForbiddenError');
-const errorHandler = require('../middlewares/errorHandler');
 
-const getClothingItems = (req, res) => {
+const getClothingItems = (req, res, next) => {
   ClothingItems.find({})
     .then((items) => res.send(items))
-    .catch((err) => errorHandler(err, req, res));
+    .catch(next);
 };
 
-const createClothingItems = (req, res) => {
+const createClothingItems = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
 
   const owner = req.user._id;
@@ -19,9 +18,10 @@ const createClothingItems = (req, res) => {
     .then((newItem) => res.status(201).send(newItem))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return new BadRequestError('Invalid clothing item data');
+        next(new BadRequestError('Invalid clothing item data'));
+      } else {
+        next(err);
       }
-      return errorHandler(err, req, res);
     });
 };
 
@@ -52,9 +52,10 @@ const likeItem = (req, res, next) => ClothingItems.findByIdAndUpdate(
   })
   .catch((err) => {
     if (err.name === 'CastError') {
-      return new BadRequestError('Invalid clothing item ID');
+      next(new BadRequestError('Invalid clothing item ID'));
+    } else {
+      next(err);
     }
-    return errorHandler(err, req, res);
   });
 
 const dislikeItem = (req, res, next) => ClothingItems.findByIdAndUpdate(
@@ -70,9 +71,10 @@ const dislikeItem = (req, res, next) => ClothingItems.findByIdAndUpdate(
   })
   .catch((err) => {
     if (err.name === 'CastError') {
-      throw new BadRequestError('Invalid clothing item ID');
+      next(new BadRequestError('Invalid clothing item ID'));
+    } else {
+      next(err);
     }
-    return errorHandler(err, req, res);
   });
 
 module.exports = {

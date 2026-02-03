@@ -32,19 +32,15 @@ app.post('/signin', loginUser);
 app.use('/items',  clothingItemRoutes);
 app.use('/profile', auth, userRoutes);
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// 404 handler for unknown routes
-app.use((req, res) => {
-  res.status(404).json({ message: 'Requested resource not found' });
-});
-
 app.use(errorLogger);
 
 app.use(errors());
 app.use(errorHandler);
+
+// Catch-all route for serving React app - must be last
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 
 mongoose

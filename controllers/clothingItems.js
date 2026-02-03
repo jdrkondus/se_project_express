@@ -25,42 +25,28 @@ const createClothingItems = (req, res) => {
     });
 };
 
-const deleteClothingItem = (req, res) => {
+const deleteClothingItem = (req, res, next) => {
   const { itemId } = req.params;
 
   ClothingItems.findById(itemId)
+    .orFail(() => new NotFoundError('Clothing item not found'))
     .then((item) => {
-      if (!item) {
-        return new NotFoundError('Clothing item not found');
+        if (item.owner.toString() !== req.user._id) {
+        throw new ForbiddenError('You do not have permission to delete this item');
       }
-      if (item.owner.toString() !== req.user._id) {
-        return new ForbiddenError('You do not have permission to delete this item');
-        return null;
-      }
-      // Return the next promise to keep the chain flat
       return ClothingItems.findByIdAndDelete(itemId);
     })
-    .then((deletedItem) => {
-      // Only send response if deletedItem is not null
-      if (deletedItem) {
-        res.send(deletedItem);
-      }
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return new BadRequestError('Invalid clothing item ID');
-      }
-      return errorHandler(err, req, res);
-    });
+    .then((deletedItem) => res.send(deletedItem))
+    .catch(next);
 };
-const likeItem = (req, res) => ClothingItems.findByIdAndUpdate(
+const likeItem = (req, res, next) => ClothingItems.findByIdAndUpdate(
   req.params.itemId,
   { $addToSet: { likes: req.user._id } },
   { new: true },
 )
   .then((item) => {
     if (!item) {
-      return new NotFoundError('Clothing item not found');
+      throw new NotFoundError('Clothing item not found');
     }
     return res.send(item);
   })
@@ -71,20 +57,20 @@ const likeItem = (req, res) => ClothingItems.findByIdAndUpdate(
     return errorHandler(err, req, res);
   });
 
-const dislikeItem = (req, res) => ClothingItems.findByIdAndUpdate(
+const dislikeItem = (req, res, next) => ClothingItems.findByIdAndUpdate(
   req.params.itemId,
   { $pull: { likes: req.user._id } },
   { new: true },
 )
   .then((item) => {
     if (!item) {
-      return new NotFoundError('Clothing item not found');
+      throw new NotFoundError('Clothing item not found');
     }
     return res.send(item);
   })
   .catch((err) => {
     if (err.name === 'CastError') {
-      return new BadRequestError('Invalid clothing item ID');
+      throw new BadRequestError('Invalid clothing item ID');
     }
     return errorHandler(err, req, res);
   });

@@ -10,7 +10,7 @@ const saltRounds = 10;
 
 const getUsers = (req, res, next) => {
   user.find({})
-    .then((users) => res.send(users))
+    .then((users) => res.json(users))
     .catch(next);
 };
 
@@ -20,7 +20,7 @@ const getCurrentUser = (req, res, next) => {
       if (!userData) {
         throw new NotFoundError('User not found');
       }
-      return res.status(200).send(userData);
+      return res.status(200).json(userData);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -42,7 +42,7 @@ const createUser = (req, res, next) => {
       const token = jwt.sign({ _id: newUser._id }, JWT_SECRET, {
         expiresIn: '7d',
       });
-      return res.status(201).send({token, user: userObj});
+      return res.status(201).json({token, user: userObj});
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -69,7 +69,7 @@ const loginUser = (req, res, next) => {
       });
       const userObj = loggedInUser.toObject();
       delete userObj.password;
-      return res.send({ token, user: userObj });
+      return res.json({ token, user: userObj });
     })
     .catch(() => {
       next(new UnauthorizedError('Invalid email or password'));
@@ -88,7 +88,7 @@ const updateUser = (req, res, next) => {
       if (!updatedUser) {
         throw new NotFoundError('User not found');
       }
-      return res.send(updatedUser);
+      return res.json(updatedUser);
     })
     .catch((err) => {
       if (err.name === 'CastError') {

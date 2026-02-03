@@ -8,13 +8,13 @@ const { getUsers, updateUser, getCurrentUser, createUser,loginUser } = require('
 
 router.get('/', getUsers);
 
-router.get('/users/me', getCurrentUser);
+router.get('/me', getCurrentUser);
 
-router.patch('/users/me', updateUser);
+router.patch('/me', updateUser);
 
-router.post('/signup', createUser);
+// router.post('/signup', createUser);
 
-router.post('/signin', loginUser);
+// router.post('/signin', loginUser);
 
 
 module.exports = router;

@@ -40,4 +40,19 @@ const clothingItemSchema = new mongoose.Schema({
     },
 });
 
+// Add virtual field for like count
+clothingItemSchema.virtual('likesCount').get(function() {
+    return this.likes.length;
+});
+
+// Ensure virtuals are included when converting to JSON
+clothingItemSchema.set('toJSON', {
+    virtuals: true,
+    transform: function(doc, ret) {
+        return ret;
+    }
+});
+
+clothingItemSchema.set('toObject', { virtuals: true });
+
 module.exports = mongoose.model('clothingItem', clothingItemSchema);
